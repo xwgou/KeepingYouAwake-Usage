@@ -28,6 +28,6 @@ Old snapshot folders are no longer used. The legacy CLI snapshot mode remains
 available for development/testing, but is not part of app setup.
 
 Verified on this Mac: ad-hoc signed build, nested helper signature, sandboxed
-XPC client reading live Codex and Kimi quotas, 12 bridge tests, 14 native tests.
+XPC client reading live Codex and Kimi quotas, 13 bridge/menu tests, 14 native tests.
 Provider UI clicks still require manual testing. Production distribution needs
 Developer ID signing/notarization, runtime packaging, and localization.

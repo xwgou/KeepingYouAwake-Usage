@@ -1,61 +1,155 @@
 # KeepingYouAwake-Usage
 
-A development fork of KeepingYouAwake with a Codex and Kimi Code usage menu.
-Click the status icon to open the menu; use **Keep Awake** to toggle sleep
-prevention. **Legacy Click Behavior** restores click-to-toggle.
+A macOS menu-bar app that keeps your Mac awake and shows remaining **Codex** and
+**Kimi Code** subscription quota. Built as a fork of
+[KeepingYouAwake](https://github.com/newmarcel/KeepingYouAwake).
 
-Use **Connect Codex…** and **Connect Kimi Code…** to reuse your signed-in CLI
-accounts. A bundled XPC helper refreshes quota automatically; no usage folder or
-manual bridge process is required. See [local setup](Documentation/AI-Usage/SETUP.txt).
+## Features
 
-Build: open `KeepingYouAwake.xcworkspace`, scheme `KeepingYouAwake`.
-Tests: `python3 -m unittest discover -s Tools/usage_bridge/tests -v` plus the
-workspace's Xcode test action. Upstream automatic updates are disabled for this fork.
+- Click the menu-bar icon to see provider status and usage details.
+- View separate quota windows, reset times, and last-update timestamps.
+- **Red** means 0% remaining (limit reached); other values use normal text.
+- Refresh automatically every five minutes, or on menu open when the last check
+  is over a minute old. **Refresh Usage** checks immediately.
+- Keep your Mac awake indefinitely or for a selected duration.
+- Enable **Legacy Click Behavior** to restore click-to-toggle sleep prevention.
 
----
+## Requirements
 
-# KeepingYouAwake
+- macOS 12 or newer for the app. Provider CLIs may require a newer version.
+- Xcode with Swift 6.1 support to build; local development was tested with Xcode 27.2.
+- `/usr/bin/python3`, available with the developer tools on the test Mac.
+- Official Codex and/or Kimi Code CLI installed and signed in to the account whose
+  usage you want to view. You can connect either provider independently.
 
-KeepingYouAwake is a small menu bar utility for macOS *(Version 10.13 and newer)* that can prevent your Mac from entering sleep mode for a predefined duration or as long as it is activated.
+This MVP is built from source. An installer and notarized release are not yet
+provided. Installing the original KeepingYouAwake app does not install this fork.
 
-https://keepingyouawake.app/
+## Setup
 
-## Installation
+### 1. Check your CLI installation
 
-**[Download the latest version here.](https://github.com/newmarcel/KeepingYouAwake/releases/latest)**
+```sh
+command -v codex
+command -v kimi
+/usr/bin/python3 --version
+```
 
-or install it via [cask](http://caskroom.github.io/): `brew install --cask keepingyouawake`.
+Open each provider's official CLI and complete its normal sign-in flow first.
+The app reuses those accounts. No API key or password needs to be entered into
+KeepingYouAwake-Usage.
 
-<img src="./Extras/Screenshot@2x.jpg" width="500" />
+### 2. Clone and build
 
-## How does it work?
+The MVP currently lives on `feature/ai-usage-menu`:
 
-The app is a small wrapper around Apple's `caffeinate` command line utility. All current versions of macOS ship with this tool by default. You can read the manual page [here](https://web.archive.org/web/20140604153141/https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man8/caffeinate.8.html).
+```sh
+git clone --branch feature/ai-usage-menu https://github.com/xwgou/KeepingYouAwake-Usage.git
+cd KeepingYouAwake-Usage
 
-### Does it work on a MacBook with a closed lid?
+xcodebuild \
+  -workspace KeepingYouAwake.xcworkspace \
+  -scheme KeepingYouAwake \
+  -configuration Debug \
+  -destination 'platform=macOS' \
+  -derivedDataPath build \
+  CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
+  -onlyUsePackageVersionsFromResolvedFile \
+  build
+```
 
-No. Because of _(sensible)_ macOS limitations and out of thermal considerations, KeepingYouAwake will only prevent sleep on desktop Macs and portable Macs with an open lid.
+The workspace and scheme retain their upstream names. Xcode resolves the locked
+package dependencies and bundles/signs the usage helper. The command uses ad-hoc
+signing for local testing, which does not provide Developer ID notarization.
 
-## Is this dangerous?
+### 3. Install and open
 
-This utility will not harm your Mac because it is based on an official command line tool by Apple. **BUT** I cannot guarantee anything, so use this tool **AT YOUR OWN RISK**.
+Quit any running copy before updating. Copy the built app into your Applications
+folder, using the fork's name:
 
-## Inspired by Caffeine
+```sh
+mkdir -p "$HOME/Applications"
+ditto build/Build/Products/Debug/KeepingYouAwake.app \
+  "$HOME/Applications/KeepingYouAwake-Usage.app"
+open "$HOME/Applications/KeepingYouAwake-Usage.app"
+```
 
-*KeepingYouAwake* is inspired by *[Caffeine](https://web.archive.org/web/20240625031548/https://www.lightheadsw.com/caffeine/)* from *Lighthead Software*. I used it for many years, but sadly it hasn't been updated in a while. Eventually in 2014 I decided to build a replacement for myself that was optimized for macOS Yosemite and used the [`caffeinate`](https://web.archive.org/web/20140604153141/https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man8/caffeinate.8.html) command line tool under the hood.
+This is a menu-bar app: look for its icon at the top of the screen. It does not
+open a normal main window.
 
-## Still using old macOS versions?
+### 4. Connect your providers
 
-- [Version 1.6.8](https://github.com/newmarcel/KeepingYouAwake/releases/tag/1.6.8) is the last release that supports macOS Big Sur and older (11.0, 10.15, 10.14, 10.13)
-- [Version 1.6.2](https://github.com/newmarcel/KeepingYouAwake/releases/tag/1.6.2) is the last release that supports macOS Sierra (10.12)
-- [Version 1.5.2](https://github.com/newmarcel/KeepingYouAwake/releases/tag/1.5.2) is the last release that supports macOS Yosemite (10.10) and El Capitan (10.11)
+1. Click the menu-bar icon.
+2. Choose **Connect Codex…** and confirm access to the installed CLI account.
+3. Choose **Connect Kimi Code…** and confirm if you use Kimi.
+4. Open the **Codex** or **Kimi Code** submenu to inspect quota and reset times.
 
-## Contribution Guidelines
+The bundled helper manages refreshes. No folder selection, separate bridge
+command, or manually started Kimi server is required. **Disconnect Codex** or
+**Disconnect Kimi Code** stops future checks for that provider without signing
+out its CLI account.
 
-If you plan to contribute to the project, I recommend taking a look at the [Contribution Guidelines](./CONTRIBUTING.md). These should cover common questions and will be updated over time.
+## Usage and troubleshooting
 
-## License
+- **Keep Awake** toggles sleep prevention. **Activate for Duration** selects a
+  duration. Opening the menu does not toggle it in the default click mode.
+- **Unavailable:** verify that the official CLI works and is signed in, then
+  choose **Refresh Usage**. Missing quota is never displayed as 0%.
+- **Not connected:** choose the corresponding Connect action.
+- **Stale:** the last successful data is over six minutes old; refresh and check
+  your network connection.
+- **CLI not found:** the helper checks its PATH and common locations, including
+  `~/.local/bin/codex`, `~/.kimi-code/bin/kimi`, `/opt/homebrew/bin`, and
+  `/usr/local/bin`. Custom install paths are not yet configurable in the UI.
+- **Old menu or styling after an update:** quit and reopen the installed app.
+- **Mac sleeps with the lid closed:** the underlying `caffeinate` utility does
+  not override closed-lid behavior.
 
-Everything in this project is licensed under the [MIT license](http://opensource.org/licenses/MIT). Provided image assets are also covered by this license.
+Quota refers to Codex/Kimi Code subscription allowances, not API billing balances.
+Kimi's local usage API is experimental and may change with CLI updates.
 
-*Although it's not required please do not redistribute forked versions of the app with the same name and icon. Thanks!*
+## Privacy and current limitations
+
+The main app is sandboxed. Its bundled XPC helper runs outside App Sandbox to
+read usage through the installed CLIs. The helper returns sanitized quota data;
+credentials are not passed to the menu app. Usage checks do not start model turns
+or generate model output. Raw provider error details are omitted from the UI.
+
+The MVP still depends on developer tools for Python, uses the upstream icon, and
+has English-only usage UI. Automatic app updates are disabled. Release packaging,
+a distinct icon, localization, and Developer ID signing/notarization remain work
+for a distributable release.
+
+See the [security review](Documentation/AI-Usage/SECURITY_REVIEW.txt) and
+[development notes](Documentation/AI-Usage/DEVELOPMENT.txt) for validation details.
+Do not commit CLI credentials, server tokens, logs, or runtime snapshots.
+
+## Development and tests
+
+```sh
+# Bridge parsers, provider lifecycle, redaction, and menu action routing
+python3 -m unittest discover -s Tools/usage_bridge/tests -v
+
+# Native quota-color boundary checks
+xcrun clang -fobjc-arc -framework Cocoa Tools/style_tests/main.m -o /tmp/kya-style-tests
+/tmp/kya-style-tests
+
+# Existing native suite; builds the app and bundled helper
+xcodebuild \
+  -workspace KeepingYouAwake.xcworkspace \
+  -scheme KeepingYouAwake \
+  -destination 'platform=macOS' \
+  -derivedDataPath build \
+  CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= \
+  -onlyUsePackageVersionsFromResolvedFile \
+  test
+```
+
+Current checks: 13 bridge/menu tests, seven color-boundary checks, and 14 native
+tests. Live Codex and Kimi usage were also verified through a sandboxed XPC client.
+
+## License and attribution
+
+[MIT](LICENSE). Original KeepingYouAwake by Marcel Dierkes, inspired by Caffeine.
+The fork retains upstream attribution. See [CONTRIBUTING.md](CONTRIBUTING.md) for
+upstream conventions; development of this MVP takes place in this fork.
