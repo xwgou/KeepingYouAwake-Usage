@@ -2,3 +2,24 @@
 xcuserdata
 build
 dist
+
+# Local generated artifacts
+__pycache__/
+*.pyc
+KeepingYouAwake.xcodeproj/project.xcworkspace/
+
+# Credentials and local provider/runtime data
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+server.token
+*.token
+credentials.json
+auth.json
+usage.json
+*.log
+*.pid

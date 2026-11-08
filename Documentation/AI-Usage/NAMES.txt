@@ -1,0 +1,14 @@
+Five product name options
+
+1. KeepingYouAwake-Usage — selected product name. Previous option: AwakeGauge. Clearly joins keeping the Mac awake with measuring
+   remaining AI allowance. The earlier workspace concept already uses this name.
+2. QuotaCup — compact and friendly; suits a coffee-inspired menu-bar utility.
+3. TokenWatch — immediately suggests AI monitoring, although subscription quota
+   must not be mislabeled as a count of tokens.
+4. CodePulse — broad enough for additional coding providers and activity status.
+5. KeepingYouInformed — a recognizable nod to KeepingYouAwake, with a new identity.
+
+Selected product name: KeepingYouAwake-Usage. Domain, trademark, and app-name availability
+have not been checked. KeepingYouAwake-Usage is only the working repository name.
+Create a distinct icon and product identity before distribution, as upstream
+requests. Preserve the MIT license and original attribution.

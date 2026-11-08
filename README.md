@@ -1,3 +1,19 @@
+# KeepingYouAwake-Usage
+
+A development fork of KeepingYouAwake with a Codex and Kimi Code usage menu.
+Click the status icon to open the menu; use **Keep Awake** to toggle sleep
+prevention. **Legacy Click Behavior** restores click-to-toggle.
+
+Use **Connect Codex…** and **Connect Kimi Code…** to reuse your signed-in CLI
+accounts. A bundled XPC helper refreshes quota automatically; no usage folder or
+manual bridge process is required. See [local setup](Documentation/AI-Usage/SETUP.txt).
+
+Build: open `KeepingYouAwake.xcworkspace`, scheme `KeepingYouAwake`.
+Tests: `python3 -m unittest discover -s Tools/usage_bridge/tests -v` plus the
+workspace's Xcode test action. Upstream automatic updates are disabled for this fork.
+
+---
+
 # KeepingYouAwake
 
 KeepingYouAwake is a small menu bar utility for macOS *(Version 10.13 and newer)* that can prevent your Mac from entering sleep mode for a predefined duration or as long as it is activated.

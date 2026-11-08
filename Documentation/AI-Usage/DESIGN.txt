@@ -1,0 +1,123 @@
+AI usage menu — feature design
+2026-11-08 | Proposed behavior, not an implemented feature
+
+1. Product goal and scope
+Click the menu-bar icon to see Codex and Kimi Code subscription allowance,
+remaining quota, reset times, and freshness, while retaining sleep prevention.
+“Kimi” is interpreted as Kimi Code membership, not Kimi consumer-chat limits or
+Moonshot API balance. Confirm a different product scope before adding billing.
+One connected account per provider is sufficient for v1. Do not merge quotas
+across providers, time windows, or metered buckets. Token activity is optional
+future detail, not a substitute for subscription allowance.
+
+2. Click behavior
+Default normal click opens the native NSMenu. Right-click, Control-click, and
+Option-click also open it. None of these changes sleep prevention. An explicit
+Keep Awake action toggles the existing timer; retain Activate for Duration and
+its existing duration choices. Show current state and expiration beside it.
+Add a preference for legacy behavior: normal click toggles, modified/right-click
+opens usage. Explain the new default on first launch. Keep icon fill tied to
+awake state; use its tooltip for both awake state and the open-menu action.
+Do not silently import preferences from the original application's bundle.
+
+3. Menu wireframe (illustrative data only)
+  KeepingYouAwake-Usage
+  Keep Awake                          On — 1h 30m left
+  Activate for Duration               >
+  ---------------------------------------------------------
+  Codex                               Connected
+    5-hour allowance                  62% remaining
+    Resets 14:30                      Updated 30 seconds ago
+    Additional allowance windows      >
+  Kimi Code                           Connected
+    Current allowance                 40% remaining
+    Resets 15:10                      Updated 30 seconds ago
+    Additional allowance windows      >
+  ---------------------------------------------------------
+  Refresh Usage                       Command-R
+  Accounts and Settings…              Command-,
+  Quit                                Command-Q
+
+Window names above are mock examples. Derive labels and periods from verified
+provider data; never assume every primary window is five hours or every other
+window is weekly. Each provider submenu includes detailed windows, an exact
+local reset date/time, last successful update, and its official usage page.
+Keep the main menu compact; show at most two windows per provider before moving
+extra windows into the submenu. A mini progress bar may supplement readable
+text. Keyboard navigation and VoiceOver must expose the same information.
+
+4. Data and error semantics
+A snapshot holds providerID, opaque accountKey, fetchedAt, sourceVersion,
+state, optional lastError, and quotaWindows. Each window holds a stable ID,
+provider label, optional duration, used/limit or usedPercent, unit, resetsAt,
+and an optional provider-reported blocked state. Preserve missing values.
+Render remaining percent only from an authoritative percentage or a positive
+verified limit. Reject invalid numeric ranges. Zero remaining means exhausted;
+missing data means unavailable. A predicted reset is not proof that access has
+been restored. Re-fetch before displaying recovered quota.
+States: not connected, loading, fresh, stale, offline, login expired, exhausted,
+unsupported client, unavailable quota. Show an independent state for each
+provider. Failed refresh retains the last snapshot with a stale label and its
+original timestamp; initial failures show no percentage. An old account's
+snapshot must never appear after a switch or disconnect.
+
+5. Integration strategy
+Codex: use a local app-server connection through its documented structured
+account interface. Complete initialize/initialized, then account/read and
+account/rateLimits/read. Parse rateLimitsByLimitId when available, otherwise
+rateLimits; preserve separate primary/secondary windows. usedPercent,
+windowDurationMins, and resetsAt supply display data. Handle
+account/rateLimits/updated. Inspect installed-version schemas before coding.
+Only account reads are needed; do not start a conversation or generation.
+Connection should reuse CLI-managed authentication without copying raw tokens.
+
+Kimi Code: installed 2.4.1 documents interactive /usage but its help exposes no
+dedicated machine-readable usage command. First investigate current ACP/server
+capabilities for a read-only quota response and authentication lifecycle. If no
+supported contract exists, evaluate a narrowly scoped, version-pinned adapter
+against first-party implementation evidence, with an explicit experimental
+label. Do not assume the older Python kimi-cli API matches the installed Node
+CLI. Do not send /usage as a model prompt or parse colored terminal screens.
+Until a reliable adapter is validated, show Unavailable and a dashboard shortcut.
+That fallback is useful during development but does not complete this feature.
+
+6. Architecture and source change map
+Retain Objective-C/AppKit, upstream formatting, Auto macros, and macOS 12 UI
+compatibility. Each CLI may impose a newer OS minimum; report incompatibility
+per provider without disabling Keep Awake.
+- Packages/KYAStatusItemUI/.../KYAStatusItemController.m: change toggleStatus:
+  routing and tooltip behavior, with the legacy-click preference.
+- KeepingYouAwake/KYAMainMenu/KYAMainMenu.m: add provider sections, explicit awake
+  action, refresh, and account settings while retaining duration and quit items.
+- KeepingYouAwake/KYAAppController/KYAAppController.m: own coordinator lifecycle;
+  keep its existing activation/termination methods authoritative.
+- New Packages/KYAUsage: immutable snapshots, adapter protocol, parsers, refresh
+  policy, and fixture tests. Keep provider I/O separate from menu rendering.
+- New app Usage/ controller: main-thread menu updates and account connection UI.
+- Existing Settings and localized string catalogs: add usage settings and labels.
+- Packages/KYASleepWakeTimer: preserve caffeinate lifecycle and duration logic.
+
+7. Sandboxing and account connection
+Both upstream targets, including Direct, enable App Sandbox. Launching a CLI
+from a sandbox does not grant it normal access to its account files. Treat this
+as an architectural gate, not a path-selection problem. Prototype a user-started
+companion outside the app sandbox that performs only account reads and serves
+sanitized quota snapshots over authenticated local IPC. Validate macOS signing,
+IPC access, account ownership, and lifecycle before selecting this design.
+Do not disable sandboxing as an incidental fix or assume network.client alone
+permits CLI credential access. If the companion proves unsuitable, explicitly
+redesign distribution/authentication before implementation proceeds.
+Connection UI explains which installed CLI/account is being used. Disconnect
+removes app-owned connection material and cache; it does not log the CLI out.
+Keep new secrets in Keychain and never log tokens, headers, or conversation data.
+
+8. Refresh and accessibility
+Render cached data immediately. Refresh on opening if older than 60 seconds;
+optional background checks every five minutes for connected accounts only.
+Manual refresh bypasses freshness but respects server retry deadlines. Deduplicate
+per-provider requests, time out after 10 seconds, use bounded exponential backoff
+with jitter, and refresh after wake. Run process/network I/O off the main thread.
+Keep menu updates safe during NSMenu tracking; do not move a highlighted action
+under the pointer. Retry must not create accumulating helper processes.
+Use dynamic system colors, text in addition to color, localized dates, and
+VoiceOver labels. Opening the menu must stay responsive while both providers fail.

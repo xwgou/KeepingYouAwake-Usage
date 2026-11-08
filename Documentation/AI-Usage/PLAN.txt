@@ -1,0 +1,92 @@
+Milestone 2 update: folder selection replaced by provider Connect controls and
+bundled XPC helper; live sandboxed-client integration succeeds for both providers.
+SETUP.txt and DEVELOPMENT.txt describe the current architecture and validation.
+
+Current implementation status — 2026-11-08
+Menu foundation and snapshot reader are implemented. The companion reads Codex
+structured quota and Kimi's experimental local-server quota contract. Offline
+and native tests pass. Signed sandbox and live-account validation remain open.
+A user-selected snapshot folder replaces the proposed IPC companion transport.
+See DEVELOPMENT.txt and SETUP.txt for the authoritative current status.
+
+AI usage menu — implementation plan
+2026-11-08 | Development started; user authorized implementation
+
+Completed foundation
+- Created xwgou/KeepingYouAwake-Usage on GitHub.
+- Downloaded source snapshot 2be93dd7f390b23fbca934ff3b1ac03468a80077.
+- Inspected status item, menu, timer ownership, entitlements, build configuration,
+  upstream license/contribution guidance, and local CLI help.
+- Produced design, architecture gates, acceptance criteria, and five name options.
+
+Phase 1 — reproducible baseline and integration feasibility (2–3 engineering days)
+1. Obtain a normal Git checkout using README.txt, record the baseline SHA, and
+   resolve the locked Sparkle 2.9.5 dependency. Existing local Xcode is 27.2.
+2. Build and run baseline tests; record duration, click, launch, and timer behavior.
+3. Confirm Codex account/rate-limit schema on CLI 0.167.0 and gather sanitized
+   fixtures for success, missing windows, expired login, and unsupported auth.
+4. Find and validate Kimi Code 2.4.1's read-only quota contract. Record version,
+   auth, endpoint/protocol, units, reset semantics, and compatibility boundaries.
+5. Validate the sandbox/companion proposal with the actual signed app. Demonstrate
+   that another local client cannot read snapshots without connection authority.
+Exit: both providers have verified account-bound quota reads and a viable macOS
+integration. If Kimi or sandboxing remains unresolved, document the precise
+blocker; do not claim live usage is implemented or proceed as though links suffice.
+
+Phase 2 — menu and data model (1–2 days, after baseline)
+Implement snapshots, fixture-driven menu sections, explicit awake toggle,
+legacy-click setting, labels, and account settings. Preserve all duration options.
+Test empty, loading, exhausted, stale, multiple-window, and long-label layouts.
+Exit: one click reveals both sections; opening never toggles the timer; legacy
+mode preserves upstream normal/modified-click behavior.
+
+Phase 3 — adapters and refresh lifecycle (2–3 days, after Phase 1 gate)
+Implement each verified adapter, account isolation, request cancellation,
+refresh deduplication, timeout/backoff, wake handling, and last-good snapshots.
+Connect coordinator to NSMenu updates; add manual refresh and dashboard links.
+Exit: actual usage matches each provider's own UI for the same account/time,
+allowing documented refresh delay. Monitoring performs no inference requests.
+
+Phase 4 — regression, packaging, and handover (1–2 days)
+Add focused XCTest coverage; run the existing default and sanitizer plans.
+Manually check click routing, timer expiration, launch/login, URL automation,
+sleep/wake, disconnect/reconnect, CLI upgrade, network outage, VoiceOver, keyboard,
+light/dark appearance, and Intel/Apple Silicon compatibility where supported.
+Select one product name and create a distinct icon. Change app/helper bundle IDs,
+URL schemes and login-item references consistently. Replace or disable upstream
+Sparkle feeds and signing keys for the fork before distributing any test build.
+Retain MIT notices. Document install, CLI prerequisites, connection, and uninstall.
+Exit: signed install works on the supported OS range and updater cannot replace
+this fork with the upstream app. Unavailable hardware checks remain explicit.
+
+Estimated effort: 6–10 engineering days after a viable provider contract and
+sandbox approach are established. Kimi reverse-integration work, provider changes,
+and signing availability may extend this; this is not a delivery commitment.
+
+Build and test commands (from a future Git checkout; not executed in this task)
+  xcodebuild -resolvePackageDependencies -workspace KeepingYouAwake.xcworkspace -scheme KeepingYouAwake
+  xcodebuild -workspace KeepingYouAwake.xcworkspace -scheme KeepingYouAwake -configuration Debug -destination 'platform=macOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+  make test
+  make test-with-sanitizers
+Makefile test recipes require xcbeautify and resolved packages. Unsigned builds
+are compile checks only; sandbox, helper IPC, Keychain, and distribution checks
+require suitable signing. Do not infer runtime success from a successful build.
+
+Test matrix and release acceptance
+- Parsers: missing/null/extra fields, multiple buckets, zero/invalid limits,
+  invalid percentages, units, reset timestamps, and unsupported versions.
+- Coordinator: simultaneous opens create one request per provider; timeout,
+  rate limiting, wake, and failure do not leak subprocesses or block the main UI.
+- Accounts: switch during an in-flight request discards the old response;
+  disconnect clears app-owned cache without changing the CLI login.
+- UI: both providers visible with independently accurate state; 0% and unknown
+  are distinguishable; stale data retains its true timestamp.
+- Regression: menu open has no timer effect; explicit toggle, durations, legacy
+  clicks, and existing automation still work.
+- Full feature completion requires live Codex AND Kimi usage in the menu. A mockup
+  or dashboard-only mode must be labeled a partial prototype.
+
+Current validation
+Source archive integrity and unchanged upstream-file bytes were checked locally.
+CLI versions/help and Xcode version were inspected. No live usage reads, app
+builds, runtime tests, or code changes were performed for this design task.

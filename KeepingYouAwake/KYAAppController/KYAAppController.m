@@ -7,9 +7,12 @@
 //
 
 #import "KYAAppController.h"
+#import <math.h>
+#import "../../Helpers/UsageService/Protocol.h"
 #import <KYACommon/KYACommon.h>
 #import "KYALocalizedStrings.h"
 #import "KYAMainMenu.h"
+#import "../KYAMainMenu/KYAUsageStyle.h"
 #import "KYABatteryCapacityThreshold.h"
 #import "KYAActivationDurationsMenuController.h"
 #import "KYAActivationUserNotification.h"
@@ -18,7 +21,7 @@
 #define KYA_MINUTES(m) (m * 60.0f)
 #define KYA_HOURS(h) (h * 3600.0f)
 
-@interface KYAAppController () <KYAStatusItemControllerDataSource, KYAStatusItemControllerDelegate, KYAActivationDurationsMenuControllerDelegate, KYASleepWakeTimerDelegate>
+@interface KYAAppController () <NSMenuDelegate, KYAStatusItemControllerDataSource, KYAStatusItemControllerDelegate, KYAActivationDurationsMenuControllerDelegate, KYASleepWakeTimerDelegate>
 @property (nonatomic, readwrite) KYASleepWakeTimer *sleepWakeTimer;
 @property (nonatomic, readwrite) KYAStatusItemController *statusItemController;
 @property (nonatomic) KYAActivationDurationsMenuController *menuController;
@@ -30,6 +33,11 @@
 
 // Menu
 @property (nonatomic) NSMenu *menu;
+@property (nonatomic) NSUInteger usageGeneration;
+@property (nonatomic) BOOL usageReadInProgress;
+@property (nonatomic) NSXPCConnection *usageConnection;
+@property (nonatomic) NSTimer *usageTimer;
+@property (nonatomic) NSDate *lastUsageRefresh;
 @end
 
 @implementation KYAAppController
@@ -46,6 +54,12 @@
         [self configureEventHandler];
         [self configureUserNotificationCenter];
         [self configureMainMenu];
+        [NSUserDefaults.standardUserDefaults removeObjectForKey:@"usageFolderBookmark"];
+        __weak typeof(self) weakSelf = self;
+        self.usageTimer = [NSTimer scheduledTimerWithTimeInterval:300 repeats:YES block:^(NSTimer *timer) {
+            [weakSelf reloadUsageSnapshot:nil];
+        }];
+        [self reloadUsageSnapshot:nil];
 
         Auto center = NSNotificationCenter.defaultCenter;
         [center addObserver:self
@@ -68,6 +82,8 @@
 
 - (void)dealloc
 {
+    [self.usageTimer invalidate];
+    [self.usageConnection invalidate];
     Auto center = NSNotificationCenter.defaultCenter;
     [center removeObserver:self name:NSApplicationDidFinishLaunchingNotification object:nil];
     [center removeObserver:self name:NSApplicationDidChangeScreenParametersNotification object:nil];
@@ -85,6 +101,185 @@
     self.menuController = menuController;
     
     self.menu = KYACreateMainMenuWithActivationDurationsSubMenu(menuController.menu);
+    self.menu.delegate = self;
+    for(NSMenuItem *item in self.menu.itemArray)
+    {
+        if(item.action == @selector(toggleKeepAwake:) || item.action == @selector(toggleLegacyClickBehavior:) || item.action == @selector(toggleCodexConnection:) || item.action == @selector(reloadUsageSnapshot:) || item.action == @selector(toggleKimiConnection:))
+        {
+            item.target = self;
+        }
+    }
+}
+
+#pragma mark - Usage Snapshots
+
+- (void)menuWillOpen:(NSMenu *)menu
+{
+    if(self.lastUsageRefresh == nil || self.lastUsageRefresh.timeIntervalSinceNow < -60)
+        [self reloadUsageSnapshot:nil];
+}
+
+- (IBAction)toggleCodexConnection:(id)sender
+{
+    [self toggleUsageProvider:@"usageCodexConnected"];
+}
+
+- (IBAction)toggleKimiConnection:(id)sender
+{
+    [self toggleUsageProvider:@"usageKimiConnected"];
+}
+
+- (void)toggleUsageProvider:(NSString *)key
+{
+    Auto defaults = NSUserDefaults.standardUserDefaults;
+    BOOL connected = [defaults boolForKey:key];
+    if(!connected)
+    {
+        Auto alert = [NSAlert new];
+        alert.messageText = [key isEqual:@"usageCodexConnected"] ? @"Connect Codex" : @"Connect Kimi Code";
+        alert.informativeText = @"Read usage from your installed, signed-in CLI? The bundled helper refreshes quota automatically. If needed, sign in using the official CLI first.";
+        [alert addButtonWithTitle:@"Connect"];
+        [alert addButtonWithTitle:@"Cancel"];
+        if([alert runModal] != NSAlertFirstButtonReturn) return;
+    }
+    [defaults setBool:!connected forKey:key];
+    self.usageGeneration++;
+    [self.usageConnection invalidate];
+    self.usageConnection = nil;
+    self.usageReadInProgress = NO;
+    [self displayUsageProviders:nil];
+    [self reloadUsageSnapshot:nil];
+}
+
+- (IBAction)reloadUsageSnapshot:(id)sender
+{
+    Auto defaults = NSUserDefaults.standardUserDefaults;
+    BOOL codex = [defaults boolForKey:@"usageCodexConnected"];
+    BOOL kimi = [defaults boolForKey:@"usageKimiConnected"];
+    if(self.usageReadInProgress || (!codex && !kimi)) return;
+    self.usageReadInProgress = YES;
+    NSUInteger generation = ++self.usageGeneration;
+    Auto connection = [[NSXPCConnection alloc] initWithServiceName:@"com.xwgou.KeepingYouAwake-Usage.UsageService"];
+    connection.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(KYAUsageServiceProtocol)];
+    self.usageConnection = connection;
+    [connection resume];
+    __weak typeof(self) weakSelf = self;
+    void (^finish)(NSData *) = ^(NSData *data) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            Auto strongSelf = weakSelf;
+            if(strongSelf == nil || generation != strongSelf.usageGeneration || !strongSelf.usageReadInProgress) return;
+            strongSelf.usageReadInProgress = NO;
+            strongSelf.lastUsageRefresh = NSDate.date;
+            id document = data.length > 0 && data.length <= 1048576 ? [NSJSONSerialization JSONObjectWithData:data options:0 error:nil] : nil;
+            NSArray *providers = nil;
+            if([document isKindOfClass:NSDictionary.class] && [document[@"schemaVersion"] isEqual:@1] && [document[@"providers"] isKindOfClass:NSArray.class])
+                providers = document[@"providers"];
+            if(providers == nil)
+                providers = @[@{@"provider": @"Codex", @"state": codex ? @"unavailable" : @"notConnected"}, @{@"provider": @"Kimi Code", @"state": kimi ? @"unavailable" : @"notConnected"}];
+            [strongSelf displayUsageProviders:providers];
+            [strongSelf.usageConnection invalidate];
+            strongSelf.usageConnection = nil;
+        });
+    };
+    id<KYAUsageServiceProtocol> proxy = [connection remoteObjectProxyWithErrorHandler:^(NSError *error) { finish(nil); }];
+    [proxy fetchCodex:codex kimi:kimi reply:finish];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 45 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{ finish(nil); });
+}
+
+- (void)displayUsageProviders:(NSArray *)providers
+{
+    NSArray *names = @[@"Codex", @"Kimi Code"];
+    Auto formatter = [NSISO8601DateFormatter new];
+    formatter.formatOptions = NSISO8601DateFormatWithInternetDateTime | NSISO8601DateFormatWithFractionalSeconds;
+    for(NSUInteger index = 0; index < names.count; index++)
+    {
+        NSString *name = names[index];
+        NSDictionary *provider = nil;
+        for(id candidate in providers)
+        {
+            if([candidate isKindOfClass:NSDictionary.class] && [candidate[@"provider"] isEqual:name])
+            {
+                provider = candidate;
+                break;
+            }
+        }
+        NSString *status = @"Not connected";
+        Auto item = [self.menu itemWithTag:810 + (NSInteger)index];
+        Auto submenu = item.submenu;
+        [submenu removeAllItems];
+        id fetched = provider[@"fetchedAt"];
+        NSDate *date = [fetched isKindOfClass:NSString.class] ? [formatter dateFromString:fetched] : nil;
+        BOOL fresh = [provider[@"state"] isEqual:@"fresh"] && date != nil;
+        if(provider != nil) status = @"Unavailable";
+        if([provider[@"state"] isEqual:@"notConnected"]) status = @"Not connected";
+        if(fresh) status = (date.timeIntervalSinceNow < -360 || date.timeIntervalSinceNow > 60) ? @"Stale" : @"Connected";
+        if(fresh && [provider[@"windows"] isKindOfClass:NSArray.class])
+        {
+            for(id window in provider[@"windows"])
+            {
+                if(![window isKindOfClass:NSDictionary.class]) continue;
+                id remaining = window[@"remainingPercent"];
+                id label = window[@"label"];
+                if(![remaining isKindOfClass:NSNumber.class] || ![label isKindOfClass:NSString.class]) continue;
+                double value = [remaining doubleValue];
+                if(CFGetTypeID((__bridge CFTypeRef)remaining) == CFBooleanGetTypeID() || !isfinite(value) || value < 0 || value > 100) continue;
+                Auto text = [NSString stringWithFormat:@"%@: %g%% remaining%@", label, value, value == 0 ? @" — Limit reached" : @""];
+                [submenu addItem:KYAUsageInformation(text, KYAUsageColor(value))];
+                id reset = window[@"resetsAt"];
+                if([reset isKindOfClass:NSString.class])
+                {
+                    NSDate *resetDate = [formatter dateFromString:reset];
+                    if(resetDate == nil)
+                    {
+                        Auto plain = [NSISO8601DateFormatter new];
+                        resetDate = [plain dateFromString:reset];
+                    }
+                    if(resetDate)
+                    {
+                        Auto resetText = [@"Resets " stringByAppendingString:[NSDateFormatter localizedStringFromDate:resetDate dateStyle:NSDateFormatterShortStyle timeStyle:NSDateFormatterShortStyle]];
+                        [submenu addItem:KYAUsageInformation(resetText, NSColor.labelColor)];
+                    }
+                }
+            }
+        }
+        if(submenu.numberOfItems == 0)
+            [submenu addItem:KYAUsageInformation(@"No verified quota available", NSColor.labelColor)];
+        if(date)
+        {
+            Auto updated = [@"Updated " stringByAppendingString:[NSDateFormatter localizedStringFromDate:date dateStyle:NSDateFormatterShortStyle timeStyle:NSDateFormatterShortStyle]];
+            [submenu addItem:KYAUsageInformation(updated, NSColor.labelColor)];
+        }
+        item.title = [NSString stringWithFormat:@"%@ — %@", name, status];
+    }
+}
+
+- (IBAction)toggleKeepAwake:(id)sender
+{
+    [self statusItemControllerShouldPerformPrimaryAction:self.statusItemController];
+}
+
+- (IBAction)toggleLegacyClickBehavior:(id)sender
+{
+    Auto defaults = NSUserDefaults.standardUserDefaults;
+    [defaults setBool:![defaults boolForKey:@"usageLegacyClickBehavior"] forKey:@"usageLegacyClickBehavior"];
+    self.statusItemController.appearance = self.sleepWakeTimer.isScheduled ? KYAStatusItemAppearanceActive : KYAStatusItemAppearanceInactive;
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem *)item
+{
+    if(item.action == @selector(toggleKeepAwake:))
+    {
+        item.state = self.sleepWakeTimer.isScheduled ? NSControlStateValueOn : NSControlStateValueOff;
+    }
+    else if(item.action == @selector(toggleLegacyClickBehavior:))
+    {
+        item.state = [NSUserDefaults.standardUserDefaults boolForKey:@"usageLegacyClickBehavior"] ? NSControlStateValueOn : NSControlStateValueOff;
+    }
+    if(item.action == @selector(toggleCodexConnection:))
+        item.title = [NSUserDefaults.standardUserDefaults boolForKey:@"usageCodexConnected"] ? @"Disconnect Codex" : @"Connect Codex…";
+    if(item.action == @selector(toggleKimiConnection:))
+        item.title = [NSUserDefaults.standardUserDefaults boolForKey:@"usageKimiConnected"] ? @"Disconnect Kimi Code" : @"Connect Kimi Code…";
+    return YES;
 }
 
 #pragma mark - Status Item Controller

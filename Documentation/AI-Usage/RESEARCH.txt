@@ -1,0 +1,44 @@
+Research and source notes — 2026-11-08
+
+Upstream baseline
+https://github.com/newmarcel/KeepingYouAwake
+Fork: https://github.com/xwgou/KeepingYouAwake-Usage
+Archive commit: 2be93dd7f390b23fbca934ff3b1ac03468a80077
+Local authoritative evidence:
+- Configuration.xcconfig: macOS 12.0; marketing version 1.6.9.
+- Packages/KYAStatusItemUI/Sources/KYAStatusItemUI/KYAStatusItemController.m:
+  normal click delegates the primary action; Control/Option/right-click opens menu.
+- KeepingYouAwake/KYAAppController/KYAAppController.m: primary action toggles timer.
+- KeepingYouAwake/KYAMainMenu/KYAMainMenu.m: duration, settings, and quit menu.
+- Both KeepingYouAwake/*.entitlements files enable App Sandbox.
+- KeepingYouAwake.xcworkspace/xcshareddata/swiftpm/Package.resolved: Sparkle 2.9.5.
+- Makefile: test and test-with-sanitizers; xcbeautify required. Its VERSION value
+  is older than Configuration.xcconfig, so do not use it as release truth.
+- LICENSE and README.md: MIT; upstream requests a new name/icon for forks.
+- CONTRIBUTING.md: follow existing Objective-C style and Auto macro. Upstream
+  generally rejects AI-generated code contributions. This is a separate fork;
+  no upstream issue or pull request was opened or is part of the current plan.
+
+Codex
+https://learn.chatgpt.com/docs/app-server
+Official documentation supports structured account rate-limit reads and updates,
+with separate quota buckets and windows. The proposed integration uses that
+protocol instead of scraping /status. Local codex-cli is 0.167.0; its help exposes
+app-server and schema generation. Runtime compatibility and account access have
+not been tested. API-key billing must not be presented as ChatGPT quota.
+
+Kimi
+https://www.kimi.com/code/docs/en/kimi-code-cli/reference/slash-commands.html
+https://www.kimi.com/code/docs/en/kimi-code-cli/reference/kimi-command.html
+https://www.kimi.com/en/help/kimi-code/membership-guide
+https://www.kimi.com/en/help/kimi-code/faq
+Current docs identify /usage for quota and distinguish Kimi Code membership
+from pay-as-you-go Open Platform billing. They describe migration from the older
+Python client to the Node client. Local kimi is 2.4.1: help includes acp and web,
+but no dedicated usage subcommand. ACP existence alone does not establish a quota
+API. No supported machine-readable quota contract was verified in this task.
+
+Design assumptions requiring implementation validation
+The companion approach, refresh intervals, menu layout, compatibility policy,
+and effort estimates are proposed engineering choices, not provider guarantees.
+No real account data was read and all example usage values are fictional.

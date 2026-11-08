@@ -63,7 +63,8 @@
     Auto delegate = self.delegate;
     Auto event = NSApplication.sharedApplication.currentEvent;
     
-    if((event.modifierFlags & NSEventModifierFlagControl)   // ctrl click
+    if(![NSUserDefaults.standardUserDefaults boolForKey:@"usageLegacyClickBehavior"]
+       || (event.modifierFlags & NSEventModifierFlagControl)   // ctrl click
        || (event.modifierFlags & NSEventModifierFlagOption) // alt click
        || (event.type == NSEventTypeRightMouseUp))          // right click
     {
@@ -95,12 +96,12 @@
     if(appearance == KYAStatusItemAppearanceActive)
     {
         button.image = imageProvider.activeIconImage;
-        button.toolTip = KYA_L10N_CLICK_TO_ALLOW_SLEEP;
+        button.toolTip = [NSUserDefaults.standardUserDefaults boolForKey:@"usageLegacyClickBehavior"] ? KYA_L10N_CLICK_TO_ALLOW_SLEEP : @"KeepingYouAwake-Usage — Awake; click to open menu";
     }
     else
     {
         button.image = imageProvider.inactiveIconImage;
-        button.toolTip = KYA_L10N_CLICK_TO_PREVENT_SLEEP;
+        button.toolTip = [NSUserDefaults.standardUserDefaults boolForKey:@"usageLegacyClickBehavior"] ? KYA_L10N_CLICK_TO_PREVENT_SLEEP : @"KeepingYouAwake-Usage — Sleep allowed; click to open menu";
     }
     
     [self didChangeValueForKey:@"appearance"];

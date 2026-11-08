@@ -23,6 +23,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// Controls the display a action handling for the status bar item.
 @property (nonatomic, readonly) KYAStatusItemController *statusItemController;
 
+- (IBAction)toggleKeepAwake:(id)sender;
+- (IBAction)toggleLegacyClickBehavior:(id)sender;
+- (IBAction)toggleCodexConnection:(id)sender;
+- (IBAction)reloadUsageSnapshot:(id)sender;
+- (IBAction)toggleKimiConnection:(id)sender;
+
 @end
 
 NS_ASSUME_NONNULL_END

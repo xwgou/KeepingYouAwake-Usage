@@ -1,0 +1,10 @@
+Fork: https://github.com/xwgou/KeepingYouAwake-Usage
+Upstream: https://github.com/newmarcel/KeepingYouAwake
+Archive: main.zip downloaded via GitHub in Chrome on 2026-11-08
+Archive commit: 2be93dd7f390b23fbca934ff3b1ac03468a80077
+Local source is an archive snapshot, not a Git clone; shell DNS cannot resolve github.com.
+Archive SHA-256: f6cb64ac5c1c8ad596d4582cc28c6d0d9cfa898780dfa0296860508897967279
+Source archive file modes preserved. Feature implementation has not started.
+
+2026-11-08 update: Git metadata restored from a fresh clone of the same fork.
+Local feature changes preserved on feature/ai-usage-menu.

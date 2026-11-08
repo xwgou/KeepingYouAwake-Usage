@@ -1,0 +1,74 @@
+2026-11-08 — Simplified quota colors
+0% remaining is red. Every positive percentage and supporting information uses
+normal text (black in light mode, adaptive in dark mode). Removed yellow, green,
+and secondary gray from provider information. Seven color boundary checks,
+signed Debug build, signature verification, and diff checks passed.
+Installed local app updated; relaunch needed.
+
+2026-11-08 — Quota color styling
+Remaining quota: 0% red with Limit reached; 0–25% exclusive yellow;
+25–75% inclusive semantic normal text (black in light mode); above 75% green.
+Read-only custom menu views prevent AppKit enabled/disabled validation from
+changing colors during refresh. Reset/update text uses consistent secondary text.
+Quota percentages retain fractional values so positive low quotas do not read 0%.
+Seven native color-boundary checks passed, Xcode 14-test suite passed, and signed
+local app updated. Manual visual check remains pending after relaunch.
+Automatic refresh remains five minutes, plus menu-open checks after 60 seconds
+and immediate Refresh Usage requests (concurrent refreshes are deduplicated).
+
+2026-11-08 — Kimi connection menu fix
+Fixed Connect Kimi Code action selector mismatch (distoggleCodexConnection: vs
+toggleKimiConnection:). Added regression check covering provider menu selectors,
+controller declarations, implementations, and target routing. 13 Python tests
+and 14 native tests passed; signed local app replaced, previous build preserved.
+Live direct and sandboxed XPC probes both returned fresh Kimi quota (two windows).
+The running app must be quit/reopened to load the fixed executable.
+
+2026-11-08 — Development milestone 2
+Implemented explicit provider connection controls, automatic refresh, and a
+bundled application-scoped XPC service. Removed folder selection/bookmarks and
+manual bridge setup from the product flow. Main app remains sandboxed; helper
+runs outside App Sandbox to query existing CLI accounts. Python script is bundled
+but currently requires /usr/bin/python3 from developer tools.
+
+Validation: signed build and nested signature passed; 12 bridge tests and 14
+native tests passed. A separately signed sandboxed integration harness invoked
+the actual bundled XPC service and received fresh Codex and Kimi quota windows.
+Old manual bridge was stopped. Local app updated with previous build backed up.
+Provider Connect clicks and production distribution remain manual validation.
+
+Historical milestone 1 follows:
+
+2026-11-08 — Development milestone 1
+Selected product name: KeepingYouAwake-Usage.
+
+Git history restored from the GitHub fork while preserving local changes.
+Branch: feature/ai-usage-menu. origin: xwgou/KeepingYouAwake-Usage;
+upstream: newmarcel/KeepingYouAwake. No changes pushed.
+
+Implemented
+- Default click-to-menu, explicit Keep Awake action, persistent legacy-click
+  preference, and tooltip behavior for both modes.
+- Provider submenus displaying verified windows, reset dates, timestamps,
+  unavailable states, and stale snapshots.
+- User-selected snapshot directory with a security-scoped bookmark, bounded
+  asynchronous JSON reads, concurrent-read deduplication, and disconnect.
+- Read-only Python companion: Codex app-server account quota and experimental
+  Kimi local-server usage adapter. Private atomic snapshots; bounded requests;
+  loopback-only Kimi requests; generic errors omit raw account/credential data.
+- Fork display name and app bundle ID; upstream update support disabled.
+
+Validation
+- Nine Python offline tests passed (parsers, boundaries, error redaction, private
+  atomic writes, allowed Codex RPC methods, and remote Kimi URL rejection).
+- Xcode workspace Debug build succeeded with signing disabled.
+- Xcode default suite passed: 14 tests, zero failures.
+- git diff --check passed.
+
+Remaining
+Live-account compatibility, signed sandbox bookmark behavior, native UI manual
+regressions, localization, dedicated icon, account connection automation, helper
+packaging, last-good cache behavior, and complete release identity migration.
+See SETUP.txt for runnable bridge commands and current limitations. The local
+snapshot architecture replaces the earlier proposed authenticated IPC helper:
+the app selects a dedicated quota-only folder and never reads CLI credentials.

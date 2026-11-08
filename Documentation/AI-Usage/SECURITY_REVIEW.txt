@@ -1,0 +1,25 @@
+MVP pre-push credential review — 2026-11-08
+
+Scope: current project files (including pending MVP additions), pending Git diff,
+and inherited Git history. Gitleaks v8.30.1 scanned the working tree and 632 commits.
+
+Results: no private keys, passwords, provider API credentials, or temporary bearer
+tokens detected in the reviewed files or history after classifying false positives.
+The initial generic-key matches were upstream Xcode .xcscmblueprint repository
+identifiers and a workspace UUID. Their schema and source content were inspected;
+only those exact non-secret metadata values were excluded for the reviewed scan.
+No history rewrite was needed. Automated scanning is not an absolute guarantee.
+
+Credential handling: Kimi local server token is read at runtime from the user's
+CLI-managed file. Token contents are never bundled or returned through XPC.
+Codex account reads reuse official CLI authentication. Provider errors returned
+to the app are generic; tests use deliberately fictional credential strings.
+No real usage snapshots, logs, token files, or local account files are included.
+
+Added ignore rules for .env files, private-key containers, server tokens,
+auth/credential JSON, usage snapshots, logs, and process IDs.
+
+Validation: 13 bridge/menu tests and seven native color-boundary checks passed.
+The current MVP signed build and 14-test Xcode suite previously passed; the final
+review changes only ignore rules and this report. Build artifacts and scanner
+reports are kept outside the repository.

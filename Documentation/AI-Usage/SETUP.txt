@@ -1,0 +1,33 @@
+KeepingYouAwake-Usage — local test setup
+
+1. Open ~/Applications/KeepingYouAwake-Usage.app.
+2. Click the menu-bar icon and choose Connect Codex… or Connect Kimi Code….
+3. Confirm access to usage from the installed CLI account.
+4. Open each provider submenu to see quota windows, reset times, and freshness.
+
+No folder selection, separate bridge command, or manually started Kimi server
+is required. Refresh Usage requests new quota immediately. Connected providers
+refresh every five minutes and when the menu opens with data older than a minute.
+Disconnect clears displayed data and stops subsequent checks for that provider;
+it does not sign out the official CLI. Existing CLI logins are reused.
+
+Requirements: signed-in official Codex/Kimi CLIs and /usr/bin/python3. The latter
+is available with the developer tools on this test Mac. A self-contained Python
+runtime is still needed for distribution to Macs without developer tools.
+If usage is unavailable, verify your login in the official CLI and retry Refresh.
+
+Architecture: the sandboxed menu app sends selected-provider flags to its bundled,
+application-scoped XPC service. The service performs bounded read-only CLI queries
+and returns sanitized JSON over XPC. It can reuse an existing local Kimi server
+or start and stop a private loopback instance for its request. Only processes
+started by the helper are stopped. No credentials travel through the menu app.
+The helper is intentionally outside App Sandbox to use CLI-managed authentication;
+the main app remains sandboxed. Connect is explicit opt-in for each provider.
+
+Old snapshot folders are no longer used. The legacy CLI snapshot mode remains
+available for development/testing, but is not part of app setup.
+
+Verified on this Mac: ad-hoc signed build, nested helper signature, sandboxed
+XPC client reading live Codex and Kimi quotas, 12 bridge tests, 14 native tests.
+Provider UI clicks still require manual testing. Production distribution needs
+Developer ID signing/notarization, runtime packaging, and localization.
