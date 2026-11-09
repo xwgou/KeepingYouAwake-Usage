@@ -18,12 +18,16 @@ const NSImageName KYAStatusItemInactiveImageName = @"InactiveIcon";
 
 + (NSImage *)kya_defaultActiveIconImage
 {
-    return [NSImage imageNamed:KYAStatusItemActiveImageName];
+    Auto image = [NSImage imageNamed:KYAStatusItemActiveImageName];
+    image.template = YES;
+    return image;
 }
 
 + (NSImage *)kya_defaultInactiveIconImage
 {
-    return [NSImage imageNamed:KYAStatusItemInactiveImageName];
+    Auto image = [NSImage imageNamed:KYAStatusItemInactiveImageName];
+    image.template = YES;
+    return image;
 }
 
 #pragma mark - Custom Icon Images

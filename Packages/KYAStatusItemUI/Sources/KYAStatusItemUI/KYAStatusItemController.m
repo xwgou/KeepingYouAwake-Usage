@@ -48,11 +48,8 @@
     button.target = self;
     button.action = @selector(toggleStatus:);
     
-#if DEBUG
-    button.contentTintColor = NSColor.systemBlueColor;
-    Auto log = KYALogCreateWithCategory("StatusItemUI");
-    os_log_debug(log, "Blue status bar item color is enabled for DEBUG builds.");
-#endif
+    // AppKit chooses the contrasting menu-bar color, including full-screen Spaces.
+    button.contentTintColor = nil;
     
     self.systemStatusItem = statusItem;
     self.appearance = KYAStatusItemAppearanceInactive;
@@ -83,7 +80,7 @@
 - (KYAStatusItemAppearance)appearance
 {
     Auto menubarIcon = KYAStatusItemImageProvider.currentProvider;
-    return self.systemStatusItem.image == menubarIcon.activeIconImage;
+    return self.systemStatusItem.button.image == menubarIcon.activeIconImage;
 }
 
 - (void)setAppearance:(KYAStatusItemAppearance)appearance

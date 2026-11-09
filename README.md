@@ -12,6 +12,8 @@ A macOS menu-bar app that keeps your Mac awake and shows remaining **Codex** and
 - Refresh automatically every five minutes, or on menu open when the last check
   is over a minute old. **Refresh Usage** checks immediately.
 - Keep your Mac awake indefinitely or for a selected duration.
+- Adaptive menu-bar icons stay visible on light and dark backgrounds; distinct
+  cup shapes show the awake state.
 - Enable **Legacy Click Behavior** to restore click-to-toggle sleep prevention.
 
 ## Requirements

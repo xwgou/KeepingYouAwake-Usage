@@ -1,3 +1,12 @@
+2026-11-09 — Adaptive menu-bar icons
+Both active/inactive images explicitly use template rendering. Asset catalog
+rendering intent moved from info to properties so compiled assets retain the
+correct template flag. Removed fixed debug tint; AppKit selects contrast for the
+menu bar. Appearance getter now reads the status button image consistently.
+Validated both compiled icons are templates with distinct shapes. Signed build,
+14 native tests, and installed signature passed. Full-screen Spaces visual check
+requires relaunching the installed app; prior build preserved as a backup.
+
 2026-11-08 — Simplified quota colors
 0% remaining is red. Every positive percentage and supporting information uses
 normal text (black in light mode, adaptive in dark mode). Removed yellow, green,
