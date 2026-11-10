@@ -21,6 +21,7 @@ NSMenu *KYACreateMainMenuWithActivationDurationsSubMenu(NSMenu *activationDurati
     
     Auto title = [[NSMenuItem alloc] initWithTitle:@"KeepingYouAwake-Usage" action:nil keyEquivalent:@""];
     [mainMenu addItem:title];
+    [mainMenu addItem:[[NSMenuItem alloc] initWithTitle:@"Show Usage Panel…" action:@selector(showUsagePanel:) keyEquivalent:@""]];
     [mainMenu addItem:[[NSMenuItem alloc] initWithTitle:@"Keep Awake" action:@selector(toggleKeepAwake:) keyEquivalent:@""]];
 
     Auto activateForDuration = [[NSMenuItem alloc] initWithTitle:KYA_L10N_ACTIVATE_FOR_DURATION

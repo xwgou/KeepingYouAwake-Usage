@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        F20000000000000000000001 = {isa = PBXBuildFile; fileRef = F20000000000000000000003; };
+        F20000000000000000000002 = {isa = PBXBuildFile; fileRef = F20000000000000000000003; };
 		DA085D1021D6BAB6003D9B1B /* container-migration.plist in Resources */ = {isa = PBXBuildFile; fileRef = DA085D0F21D6BAB6003D9B1B /* container-migration.plist */; };
 		DA13771A25E969FF00FB0FAD /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DA13771925E969FF00FB0FAD /* Assets.xcassets */; };
 		DA25063027C2486D0052CCD8 /* KYADeviceInfo in Frameworks */ = {isa = PBXBuildFile; productRef = DA25062F27C2486D0052CCD8 /* KYADeviceInfo */; };
@@ -167,6 +169,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+        F20000000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KYAUsagePanelController.m; sourceTree = "<group>"; };
+        F20000000000000000000004 = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KYAUsagePanelController.h; sourceTree = "<group>"; };
 		DA085D0F21D6BAB6003D9B1B /* container-migration.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "container-migration.plist"; sourceTree = "<group>"; };
 		DA0CA9FE21D0111600879C8B /* KeepingYouAwake.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KeepingYouAwake.entitlements; sourceTree = "<group>"; };
 		DA13771925E969FF00FB0FAD /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -496,6 +500,8 @@
 				DA637B4119F14693004C8838 /* KYAAppDelegate.m */,
 				DA637B5C19F146B6004C8838 /* KYAAppController.h */,
 				DA637B5D19F146B6004C8838 /* KYAAppController.m */,
+                F20000000000000000000003,
+                F20000000000000000000004,
 			);
 			path = KYAAppController;
 			sourceTree = "<group>";
@@ -781,6 +787,7 @@
 				DAB1286C1C24540200831045 /* KYAAboutSettingsViewController.m in Sources */,
 				DA898C732A3EEE8D0005A48A /* KYASettingsWindow.m in Sources */,
 				DA637B5E19F146B6004C8838 /* KYAAppController.m in Sources */,
+                F20000000000000000000001,
 				DA4950FB27C97EF2008D1747 /* KYABatterySettingsViewController.m in Sources */,
 				DA2CCD5F26F8754C00568BDD /* KYASettingsContentViewController.m in Sources */,
 				DA637B3F19F14693004C8838 /* main.m in Sources */,
@@ -818,6 +825,7 @@
 				DAD3CF6A271186720006CA14 /* KYAAboutSettingsViewController.m in Sources */,
 				DA898C742A3EEE8D0005A48A /* KYASettingsWindow.m in Sources */,
 				DAD3CF6B271186720006CA14 /* KYAAppController.m in Sources */,
+                F20000000000000000000002,
 				DA4950FC27C97EF2008D1747 /* KYABatterySettingsViewController.m in Sources */,
 				DAD3CF6C271186720006CA14 /* KYASettingsContentViewController.m in Sources */,
 				DAD3CF6D271186720006CA14 /* main.m in Sources */,
@@ -967,7 +975,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../Frameworks";
+				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../Frameworks -framework Carbon";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -1034,7 +1042,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../Frameworks";
+				OTHER_LDFLAGS = "-Wl,-rpath,@loader_path/../Frameworks -framework Carbon";
 				SDKROOT = macosx;
 			};
 			name = Release;

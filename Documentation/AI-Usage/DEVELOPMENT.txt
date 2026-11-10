@@ -81,3 +81,23 @@ packaging, last-good cache behavior, and complete release identity migration.
 See SETUP.txt for runnable bridge commands and current limitations. The local
 snapshot architecture replaces the earlier proposed authenticated IPC helper:
 the app selects a dedicated quota-only folder and never reads CLI credentials.
+
+2026-11-09 — Shared Usage Panel
+Added a panel backed by the existing provider menu data and controller actions,
+with awake/duration, refresh, provider connections, Settings and Quit controls.
+Control–Option–Command–U opens it by default; modifier/key preferences are saved.
+Carbon hotkeys avoid input monitoring; rejected registrations retain the prior
+shortcut. Finder/Spotlight reopen and optional Dock access open the same panel.
+Login launches stay quiet. Automatic refresh and adaptive red/normal text remain.
+
+Validation: signed Debug build and Xcode test suite passed; 13 Python tests,
+11 native panel assertions and seven quota-color assertions passed. Panel checks
+cover shared data/colors, refresh and awake state, and invalid shortcuts.
+Manual verification still needed: shortcut activation from another app, Finder
+reopen, Dock toggling, login launch, and full-screen Spaces on the target Mac.
+
+Panel regression harness after building with derivedDataPath /tmp/kya-usage-local:
+clang -fobjc-arc -framework Cocoa -framework Carbon Tools/panel_tests/main.m \
+  /tmp/kya-usage-local/Build/Intermediates.noindex/KeepingYouAwake.build/Debug/KeepingYouAwake.build/Objects-normal/arm64/KYAUsagePanelController.o \
+  -o /tmp/kya-panel-tests
+/tmp/kya-panel-tests

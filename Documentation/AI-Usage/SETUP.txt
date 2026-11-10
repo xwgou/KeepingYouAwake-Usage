@@ -1,3 +1,9 @@
+Usage Panel
+Open Show Usage Panel… from the menu, reopen the app in Finder/Spotlight, or
+press Control–Option–Command–U. Configure the shortcut in the panel and click
+Apply Shortcut. Show in Dock is optional and saved. Escape hides the panel.
+The panel shares the menu's five-minute refresh and red/normal-text quota colors.
+
 KeepingYouAwake-Usage — local test setup
 
 1. Open ~/Applications/KeepingYouAwake-Usage.app.

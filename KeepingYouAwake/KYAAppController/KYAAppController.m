@@ -7,6 +7,7 @@
 //
 
 #import "KYAAppController.h"
+#import "KYAUsagePanelController.h"
 #import <math.h>
 #import "../../Helpers/UsageService/Protocol.h"
 #import <KYACommon/KYACommon.h>
@@ -33,6 +34,7 @@
 
 // Menu
 @property (nonatomic) NSMenu *menu;
+@property (nonatomic) KYAUsagePanelController *usagePanelController;
 @property (nonatomic) NSUInteger usageGeneration;
 @property (nonatomic) BOOL usageReadInProgress;
 @property (nonatomic) NSXPCConnection *usageConnection;
@@ -54,6 +56,7 @@
         [self configureEventHandler];
         [self configureUserNotificationCenter];
         [self configureMainMenu];
+        self.usagePanelController = [[KYAUsagePanelController alloc] initWithTarget:self menu:self.menu];
         [NSUserDefaults.standardUserDefaults removeObjectForKey:@"usageFolderBookmark"];
         __weak typeof(self) weakSelf = self;
         self.usageTimer = [NSTimer scheduledTimerWithTimeInterval:300 repeats:YES block:^(NSTimer *timer) {
@@ -62,6 +65,8 @@
         [self reloadUsageSnapshot:nil];
 
         Auto center = NSNotificationCenter.defaultCenter;
+        [center addObserver:self selector:@selector(showUsagePanel:) name:KYAUsagePanelRequestedNotification object:nil];
+        [center addObserver:self selector:@selector(usageApplicationDidLaunch:) name:NSApplicationDidFinishLaunchingNotification object:nil];
         [center addObserver:self
                    selector:@selector(applicationWillFinishLaunching:)
                        name:NSApplicationWillFinishLaunchingNotification
@@ -82,6 +87,7 @@
 
 - (void)dealloc
 {
+    [NSNotificationCenter.defaultCenter removeObserver:self name:KYAUsagePanelRequestedNotification object:nil];
     [self.usageTimer invalidate];
     [self.usageConnection invalidate];
     Auto center = NSNotificationCenter.defaultCenter;
@@ -104,11 +110,36 @@
     self.menu.delegate = self;
     for(NSMenuItem *item in self.menu.itemArray)
     {
-        if(item.action == @selector(toggleKeepAwake:) || item.action == @selector(toggleLegacyClickBehavior:) || item.action == @selector(toggleCodexConnection:) || item.action == @selector(reloadUsageSnapshot:) || item.action == @selector(toggleKimiConnection:))
+        if(item.action == @selector(showUsagePanel:) || item.action == @selector(toggleKeepAwake:) || item.action == @selector(toggleLegacyClickBehavior:) || item.action == @selector(toggleCodexConnection:) || item.action == @selector(reloadUsageSnapshot:) || item.action == @selector(toggleKimiConnection:))
         {
             item.target = self;
         }
     }
+}
+
+#pragma mark - Usage Panel
+
+- (void)usageApplicationDidLaunch:(NSNotification *)notification
+{
+    [self.usagePanelController applyDockPreference];
+}
+
+- (IBAction)showUsagePanel:(id)sender
+{
+    [self updateUsagePanel];
+    [self.usagePanelController showPanel];
+    if(self.lastUsageRefresh == nil || self.lastUsageRefresh.timeIntervalSinceNow < -60)
+        [self reloadUsageSnapshot:nil];
+}
+
+- (void)updateUsagePanel
+{
+    [self.usagePanelController updateWithAwake:self.sleepWakeTimer.isScheduled refreshing:self.usageReadInProgress];
+}
+
+- (IBAction)showUsageDurationMenu:(NSButton *)sender
+{
+    [self.menuController.menu popUpMenuPositioningItem:nil atLocation:NSMakePoint(0, sender.bounds.size.height) inView:sender];
 }
 
 #pragma mark - Usage Snapshots
@@ -158,6 +189,7 @@
     BOOL kimi = [defaults boolForKey:@"usageKimiConnected"];
     if(self.usageReadInProgress || (!codex && !kimi)) return;
     self.usageReadInProgress = YES;
+    [self updateUsagePanel];
     NSUInteger generation = ++self.usageGeneration;
     Auto connection = [[NSXPCConnection alloc] initWithServiceName:@"com.xwgou.KeepingYouAwake-Usage.UsageService"];
     connection.remoteObjectInterface = [NSXPCInterface interfaceWithProtocol:@protocol(KYAUsageServiceProtocol)];
@@ -251,6 +283,7 @@
         }
         item.title = [NSString stringWithFormat:@"%@ — %@", name, status];
     }
+    [self updateUsagePanel];
 }
 
 - (IBAction)toggleKeepAwake:(id)sender
@@ -263,6 +296,7 @@
     Auto defaults = NSUserDefaults.standardUserDefaults;
     [defaults setBool:![defaults boolForKey:@"usageLegacyClickBehavior"] forKey:@"usageLegacyClickBehavior"];
     self.statusItemController.appearance = self.sleepWakeTimer.isScheduled ? KYAStatusItemAppearanceActive : KYAStatusItemAppearanceInactive;
+    [self updateUsagePanel];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item
@@ -671,6 +705,7 @@
     self.statusItemController.appearance = KYAStatusItemAppearanceActive;
     
     [self enableDevicePowerMonitoring];
+    dispatch_async(dispatch_get_main_queue(), ^{ [self updateUsagePanel]; });
 }
 
 - (void)sleepWakeTimerDidDeactivate:(KYASleepWakeTimer *)sleepWakeTimer
@@ -679,6 +714,7 @@
     self.statusItemController.appearance = KYAStatusItemAppearanceInactive;
     
     [self disableDevicePowerMonitoring];
+    dispatch_async(dispatch_get_main_queue(), ^{ [self updateUsagePanel]; });
 }
 
 @end

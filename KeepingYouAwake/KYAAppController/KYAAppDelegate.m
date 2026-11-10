@@ -7,6 +7,8 @@
 //
 
 #import "KYAAppDelegate.h"
+#import "KYAUsagePanelController.h"
+#import <Carbon/Carbon.h>
 #import <KYACommon/KYACommon.h>
 #import "KYAAppUpdater.h"
 #import "KYASettingsWindow.h"
@@ -28,17 +30,19 @@
     {
         [NSApplication.sharedApplication kya_migrateLaunchAtLoginToAppServiceIfNeeded];
     }
+    NSAppleEventDescriptor *event = NSAppleEventManager.sharedAppleEventManager.currentAppleEvent;
+    BOOL loginLaunch = [event paramDescriptorForKeyword:keyAELaunchedAsLogInItem] != nil
+        || [[event paramDescriptorForKeyword:keyAEPropData] descriptorForKeyword:keyAELaunchedAsLogInItem] != nil;
+    if(!loginLaunch && [notification.userInfo[NSApplicationLaunchIsDefaultLaunchKey] boolValue])
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSNotificationCenter.defaultCenter postNotificationName:KYAUsagePanelRequestedNotification object:nil];
+        });
+
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)sender hasVisibleWindows:(BOOL)hasVisibleWindows
 {
-    // Let's ignore all reopen requests in the first 5 seconds of the app's runtime.
-    // Sometimes multiple reopen events are sent on app launch, which we don't want to handle.
-    Auto launchDate = NSRunningApplication.currentApplication.launchDate;
-    if(hasVisibleWindows == NO && [[launchDate dateByAddingTimeInterval:5.0f] compare:[NSDate date]] == NSOrderedAscending)
-    {
-        [self showSettingsWindow:sender];
-    }
+    [NSNotificationCenter.defaultCenter postNotificationName:KYAUsagePanelRequestedNotification object:nil];
     return NO;
 }
 

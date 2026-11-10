@@ -7,9 +7,11 @@ A macOS menu-bar app that keeps your Mac awake and shows remaining **Codex** and
 ## Features
 
 - Click the menu-bar icon to see provider status and usage details.
+- Open a shared **Usage Panel** from the menu, Spotlight/Finder, or a configurable
+  global shortcut (default **Control–Option–Command–U**). Optionally show a Dock icon.
 - View separate quota windows, reset times, and last-update timestamps.
 - **Red** means 0% remaining (limit reached); other values use normal text.
-- Refresh automatically every five minutes, or on menu open when the last check
+- Refresh automatically every five minutes, or on menu/panel open when the last check
   is over a minute old. **Refresh Usage** checks immediately.
 - Keep your Mac awake indefinitely or for a selected duration.
 - Adaptive menu-bar icons stay visible on light and dark backgrounds; distinct
@@ -90,6 +92,21 @@ The bundled helper manages refreshes. No folder selection, separate bridge
 command, or manually started Kimi server is required. **Disconnect Codex** or
 **Disconnect Kimi Code** stops future checks for that provider without signing
 out its CLI account.
+
+## Usage Panel and keyboard shortcut
+
+Choose **Show Usage Panel…** in the menu, or open the installed app through
+Spotlight or Finder—even when it is already running. The panel shares provider
+status, quota colors, refreshes, connections, and Keep Awake controls with the menu.
+Closing the panel leaves the app running; Escape hides it.
+
+The default global shortcut is **⌃⌥⌘U**. In the panel, choose modifiers and a letter
+or F1–F12, then click **Apply Shortcut**. Include Command or Control. Disable
+**Global shortcut** and apply to turn it off. If registration fails, the previous
+shortcut stays active. Letter choices use physical US-keyboard positions.
+
+Enable **Show in Dock** for Dock and app-switcher access; it is off by default.
+The Dock preference and shortcut survive relaunch. Launch at login stays quiet.
 
 ## Usage and troubleshooting
 
